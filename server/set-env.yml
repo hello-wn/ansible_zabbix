@@ -1,0 +1,55 @@
+---
+#Step2: set environment parameters
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - default_vars.yml
+  tasks:
+    - name: set firewall
+      shell: "firewall-cmd --zone=public --add-port={80/tcp,10051/tcp} --permanent && firewall-cmd --reload && mkdir {{tmp_dir}} && touch {{tmp_dir}}/firewall.done"
+      args:
+        creates: "{{tmp_dir}}/firewall.done"
+      tags: 
+        - firewall
+
+    - name: close selinux
+      shell: "grep 'SELINUX=disabled' {{selinux_file}} && tmp=$? && if [ tmp = 1 ]; then sed -i 's/SELINUX=enforcing/SELINUX=disabled/' {{selinux_file}}; setenforce 0; fi &&  touch {{tmp_dir}}/selinux.done"
+      args:
+        creates: {{tmp_dir}}/selinux.done
+      tags:
+        - selinux 
+    
+    - name: "install the python mysqldb module"
+      yum: pkg=MySQL-python state=latest
+
+    - name: "MySQL | Create database"
+      mysql_db: name=zabbix state=present
+      tags:
+        - mysql
+    
+    - name: "MySQL | Create database user"
+      mysql_user: name=zabbix_user password=123456  priv=zabbix.*:ALL state=present
+      tags:
+        - mysql
+      notify: restart mysql
+
+    - name: "enabel & restart mysql"
+      shell: "systemctl enable mariadb.service && systemctl enable httpd.service"
+      tags:
+        - enable
+      notify: 
+        - restart mysql
+        - restart apache
+
+    - name: "add user & group"
+      shell: "groupadd zabbix && useradd -g zabbix -m zabbix && touch {{tmp_dir}}/addzabbix.done"
+      args:
+        creates: {{tmp_dir}}/addzabbix.done
+      tags:
+        - addzabbix
+
+  handlers:
+    - name: restart mysql
+      service: name=mariadb state=restarted
+    - name: restart apache
+      service: name=httpd state=restarted

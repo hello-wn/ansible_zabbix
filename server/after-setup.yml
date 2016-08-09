@@ -1,0 +1,17 @@
+---
+#Step5: after GUI setup
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - default_vars.yml
+  tasks:
+    - name: copy zabbix.conf.php
+      template: src=zabbix.conf.php.j2 dest={{html_dir}}/conf/zabbix.conf.php
+      tags:
+        - zabbix-conf-php
+        - others
+      notify:
+        - restart zabbix_server
+  handlers:
+    - name: restart zabbix_server
+      service: name=zabbix_server state=restarted

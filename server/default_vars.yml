@@ -1,0 +1,11 @@
+---
+tmp_dir: /root/tmp_done
+selinux_file: /etc/selinux/config
+local_dir: /var/wn
+install_dir: /usr/local/zabbix
+html_dir: /var/www/html/zabbix
+php_config: /etc/php.ini
+server_dbname: zabbix
+server_dbuser: zabbix_user
+server_dbpassword: 123456
+

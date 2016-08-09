@@ -1,0 +1,8 @@
+---
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - default_vars.yml
+  tasks:
+    - name: test template
+      template: src=zabbix.conf.php.j2 dest=/root/vagrant4/zabbix.conf.php 

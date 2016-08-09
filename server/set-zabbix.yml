@@ -1,0 +1,36 @@
+---
+#Step3: import tables to zabbix database
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - default_vars.yml
+  tasks:
+    - name: copy zabbix package
+      copy: src={{local_dir}}/zabbix-3.0.4.tar.gz dest={{tmp_dir}}/zabbix-3.0.4.tar.gz
+   
+    - name: unpack zabbix package
+      shell: "cd {{tmp_dir}} && if [ ! -d zabbix-3.0.4 ]; then tar -zxvf zabbix-3.0.4.tar.gz; fi"
+      tags:
+        - unpack
+
+    - name: import schema.sql
+      shell: "cd {{tmp_dir}}/zabbix-3.0.4/database/mysql && mysql -uzabbix_user -p123456 zabbix < schema.sql && touch {{tmp_dir}}/schema.done"
+      args:
+        creates: {{tmp_dir}}/schema.done
+      tags:
+        - import
+ 
+    - name: import images.sql
+      shell: "cd {{tmp_dir}}/zabbix-3.0.4/database/mysql && mysql -uzabbix_user -p123456 zabbix < images.sql && touch {{tmp_dir}}/images.done"
+      args:
+        creates: {{tmp_dir}}/images.done
+      tags:
+        - import
+
+    - name: import data.sql
+      shell: "cd {{tmp_dir}}/zabbix-3.0.4/database/mysql && mysql -uzabbix_user -p123456 zabbix < data.sql && touch {{tmp_dir}}/data.done"
+      args:
+        creates: {{tmp_dir}}/data.done
+      tags:
+        - import
+
