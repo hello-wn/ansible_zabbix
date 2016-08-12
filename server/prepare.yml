@@ -1,7 +1,7 @@
 ---
 #Step1: install many packages
-- hosts: zabbix
-  remote_user: root
+- hosts: vagrant3
+  become: yes
   tasks:
   - name: install basic environment
     yum: pkg={{ item }} state=latest
@@ -41,6 +41,8 @@
       - openldap-clients
       - openldap-servers
       - net-snmp-devel
+      - php-bcmath
+      - net-tools
     tags:
       - basic
   - name: install apache environment
@@ -54,8 +56,9 @@
     yum: pkg={{ item }} state=latest
     with_items:
       - mysql 
-      - mysql-server
+      - mariadb-server
       - mysql-devel
+    when: ansible_distribution_major_version == "7"
     tags:
       - mysql
 
@@ -67,7 +70,7 @@
       - php-common
       - php-gd
       - php-mbstring
-      - php-mcrypt
+#      - php-mcrypt
       - php-devel
       - php-xml
     tags:
@@ -76,13 +79,13 @@
       - restart mysql
       - restart apache
 
-  - name: add bcmath
-    command: yum install *bcmath* --skip-broken
-    tags:
-      - others
-    notify: 
-      - restart mysql
-      - restart apache
+#  - name: add bcmath
+#    command: yum install *bcmath* --skip-broken
+#    tags:
+#      - others
+#    notify: 
+#      - restart mysql
+#      - restart apache
 
   handlers:
     - name: restart mysql
