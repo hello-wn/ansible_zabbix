@@ -1,7 +1,7 @@
 ---
 #Step5: after GUI setup
-- hosts: zabbix
-  remote_user: root
+- hosts: vagrant3
+  become: yes
   vars_files:
     - default_vars.yml
   tasks:

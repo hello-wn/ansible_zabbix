@@ -1,7 +1,8 @@
 ---
+server_ip: 192.168.33.10
 tmp_dir: /root/tmp_done
 selinux_file: /etc/selinux/config
-local_dir: /var/wn
+local_dir: /home/wn/example
 install_dir: /usr/local/zabbix
 html_dir: /var/www/html/zabbix
 php_config: /etc/php.ini

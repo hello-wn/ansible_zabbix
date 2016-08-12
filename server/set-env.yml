@@ -1,7 +1,7 @@
 ---
 #Step2: set environment parameters
-- hosts: zabbix
-  remote_user: root
+- hosts: vagrant3
+  become: yes
   vars_files:
     - default_vars.yml
   tasks:
@@ -15,15 +15,23 @@
     - name: close selinux
       shell: "grep 'SELINUX=disabled' {{selinux_file}} && tmp=$? && if [ tmp = 1 ]; then sed -i 's/SELINUX=enforcing/SELINUX=disabled/' {{selinux_file}}; setenforce 0; fi &&  touch {{tmp_dir}}/selinux.done"
       args:
-        creates: {{tmp_dir}}/selinux.done
+        creates: "{{tmp_dir}}/selinux.done"
       tags:
         - selinux 
     
     - name: "install the python mysqldb module"
       yum: pkg=MySQL-python state=latest
 
+    - name: "enabel & restart mysql"
+      shell: "systemctl restart mariadb && systemctl enable mariadb && systemctl enable httpd"
+      tags:
+        - enable
+      notify:
+        - restart mysql
+        - restart apache
+
     - name: "MySQL | Create database"
-      mysql_db: name=zabbix state=present
+      mysql_db: name=zabbix state=present encoding=utf8 collation=utf8_bin
       tags:
         - mysql
     
@@ -33,18 +41,10 @@
         - mysql
       notify: restart mysql
 
-    - name: "enabel & restart mysql"
-      shell: "systemctl enable mariadb.service && systemctl enable httpd.service"
-      tags:
-        - enable
-      notify: 
-        - restart mysql
-        - restart apache
-
     - name: "add user & group"
       shell: "groupadd zabbix && useradd -g zabbix -m zabbix && touch {{tmp_dir}}/addzabbix.done"
       args:
-        creates: {{tmp_dir}}/addzabbix.done
+        creates: "{{tmp_dir}}/addzabbix.done"
       tags:
         - addzabbix
 

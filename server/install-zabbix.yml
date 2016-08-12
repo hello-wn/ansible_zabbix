@@ -1,28 +1,28 @@
 ---
 #Step4: install zabbix && modify config
-- hosts: zabbix
-  remote_user: root
+- hosts: vagrant3
+  become: yes
   vars_files:
     - default_vars.yml
   tasks:
     - name: compile zabbix & install
       shell: "cd {{tmp_dir}}/zabbix-3.0.4 && ./configure --prefix={{install_dir}} --with-mysql --with-net-snmp --with-libcurl --enable-server --enable-agent --enable-proxy && make install && touch {{tmp_dir}}/zabbix_install.done"
       args:
-        creates: {{tmp_dir}}/zabbix_install.done
+        creates: "{{tmp_dir}}/zabbix_install.done"
       tags:
         - install
 
     - name: modify zabbix server config file
-      shell: "sed -i '/^# PidFile=/a PidFile=/tmp/zabbix_server.pid' {{install_dir}}/etc/zabbix_server.conf && sed -i 's/^DBUser=zabbix/DBUser=zabbix_user/' {{install_dir}}/etc/zabbix_server.conf && sed -i '/^# DBPassword=/a DBPassword=123456' {{install_dir}}/etc/zabbix_server.conf && sed -i '/^# ListenIP=127.0.0.1/a ListenIP=10.167.223.110' {{install_dir}}/etc/zabbix_server.conf && mkdir {{html_dir}} && touch {{tmp_dir}}/zabbix_config.done"
+      shell: "sed -i '/^# PidFile=/a PidFile=/tmp/zabbix_server.pid' {{install_dir}}/etc/zabbix_server.conf && sed -i 's/^DBUser=zabbix/DBUser=zabbix_user/' {{install_dir}}/etc/zabbix_server.conf && sed -i '/^# DBPassword=/a DBPassword=123456' {{install_dir}}/etc/zabbix_server.conf && sed -i '/^# ListenIP=127.0.0.1/a ListenIP={{server_ip}}' {{install_dir}}/etc/zabbix_server.conf && mkdir {{html_dir}} && touch {{tmp_dir}}/zabbix_config.done"
       args:
-        creates: {{tmp_dir}}/zabbix_config.done
+        creates: "{{tmp_dir}}/zabbix_config.done"
       tags:
         - zabbix-config
 
     - name: add html files
       shell: "cp -rf {{tmp_dir}}/zabbix-3.0.4/frontends/php/* {{html_dir}} && touch {{tmp_dir}}/html.done"
       args:
-        creates: {{tmp_dir}}/html.done
+        creates: "{{tmp_dir}}/html.done"
       tags:
         - html-copy
         - others
@@ -30,7 +30,7 @@
     - name: modify php config
       shell: "sed -i 's/max_execution_time = 30/max_execution_time = 300/' {{php_config}} && sed -i 's/max_input_time = 60/max_input_time = 300/' {{php_config}} && sed -i 's/post_max_size = 8M/post_max_size = 32M/' {{php_config}} && sed -i '/^;date.timezone =/a date.timezone = Asia/Shanghai' {{php_config}} && touch {{tmp_dir}}/php_config.done"
       args:
-        creates: {{tmp_dir}}/php_config.done
+        creates: "{{tmp_dir}}/php_config.done"
       tags:
         - php-config
         - others
@@ -38,14 +38,16 @@
     - name: add zabbix to system config
       shell: "ln -s {{install_dir}}/sbin/* /usr/local/sbin/ && ln -s {{install_dir}}/bin/* /usr/local/bin/ && cp {{tmp_dir}}/zabbix-3.0.4/misc/init.d/tru64/zabbix_server /etc/init.d/ && chmod +x /etc/init.d/zabbix_server"
       args:
-        creates: /etc/init.d/zabbix_server
+        creates: "/etc/init.d/zabbix_server"
       tags:
         - others
       notify:
+        - restart apache
         - restart zabbix_server
 
   handlers:
     - name: restart zabbix_server
       service: name=zabbix_server state=restarted
-
+    - name: restart apache
+      service: name=httpd state=restarted
 
