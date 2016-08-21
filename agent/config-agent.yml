@@ -1,0 +1,28 @@
+---
+#Step2: config zabbix_agent
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - agent_vars.yml  
+  tasks:
+    - name: modify the config
+      shell: "sed -i 's/^Server=127.0.0.1/Server={{server_ip}}/' {{install_dir}}/etc/zabbix_agentd.conf && sed -i 's/^ServerActive=127.0.0.1/ServerActive={{server_ip}}/' {{agent_config}} && sed -i 's/^Hostname=Zabbix server/Hostname=client110/' {{agent_config}}"
+      tags:
+        - agent-config
+        - config
+    
+    - name: modify system config
+      shell: "cp {{tmp_dir}}/zabbix-3.0.4/misc/init.d/tru64/zabbix_agentd /etc/init.d/ && chmod +x /etc/init.d/zabbix_agentd"
+      tags:
+        - system-config
+        - config
+      notify:
+        - restart zabbix_agentd
+
+    - name: create soft-link
+      shell: "ln -s {{install_dir}}/sbin/* /usr/local/sbin/ && ln -s {{install_dir}}/bin/* /usr/local/bin/"
+      tags: 
+        - soft-link
+  handlers:
+    - name: restart zabbix_agentd
+      service: name=zabbix_agentd state=restarted

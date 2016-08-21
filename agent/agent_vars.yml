@@ -1,0 +1,6 @@
+---
+local_dir: /var/wn
+tmp_dir: /root/tmp_done
+install_dir: /usr/local/zabbix
+server_ip: 10.167.223.118
+agent_hostname: client110

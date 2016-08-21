@@ -1,0 +1,19 @@
+---
+#Step1: complie && install zabbix_agent
+- hosts: zabbix
+  remote_user: root
+  vars_files:
+    - agent_vars.yml  
+  tasks:
+    - name: copy zabbix package
+      copy: src={{local_dir}}/zabbix-3.0.4.tar.gz dest={{tmp_dir}}/zabbix-3.0.4.tar.gz
+
+    - name: unpack zabbix package
+      shell: "cd {{tmp_dir}} && if [ ! -d zabbix-3.0.4 ]; then tar -zxvf zabbix-3.0.4.tar.gz; fi"
+      tags:
+        - unpack
+
+    - name: install agent
+      shell: "./configure --prefix={{install_dir}} --enable-agent && make install"
+      tags: 
+        - install
