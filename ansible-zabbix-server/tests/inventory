@@ -1,6 +1,0 @@
-localhost
-[mysql]
-zabbix-server-mysql-centos
-
-[postgresql]
-zabbix-server-pgsql-centos
